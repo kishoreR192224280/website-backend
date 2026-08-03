@@ -29,16 +29,17 @@ header("Content-Type: application/json");
 // =========================
 // DATABASE CONFIG
 // =========================
-$host = getenv('DB_HOST') ?: 'localhost';
+$host = getenv('DB_HOST') ?: 'dpg-d9o5d3u417fc73eiuod0-a.oregon-postgres.render.com';
 $port = getenv('DB_PORT') ?: '5432';
-$db = getenv('DB_NAME') ?: 'website-db';
-$user = getenv('DB_USER') ?: 'postgres';
-$pass = getenv('DB_PASS') ?: 'Ambi**tion21';
+$db = getenv('DB_NAME') ?: 'websitedb_uo8p';
+$user = getenv('DB_USER') ?: 'website_user';
+$pass = getenv('DB_PASS') ?: 'XcNr3mG9DdAu7dvULa7zUoJEZcG5adyA';
 
 // =========================
 // DSN (PostgreSQL)
 // =========================
-$dsn = "pgsql:host=$host;port=$port;dbname=$db";
+// Note: sslmode=require is necessary for external Render DB connections
+$dsn = "pgsql:host=$host;port=$port;dbname=$db;sslmode=require";
 
 // =========================
 // PDO OPTIONS
