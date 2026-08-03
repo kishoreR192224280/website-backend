@@ -1,0 +1,5 @@
+.git
+.gitignore
+*.sql
+README.md
+uploads/
