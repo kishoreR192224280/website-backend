@@ -7,7 +7,7 @@ date_default_timezone_set('UTC');
 // =========================
 $allowedOrigins = [
     'https://conference-socket.onrender.com',   // production frontend
-    'http://localhost:5173',         // local dev
+    'https://europe-conference.vercel.app',         // local dev
 ];
 
 if (isset($_SERVER['HTTP_ORIGIN']) && in_array($_SERVER['HTTP_ORIGIN'], $allowedOrigins)) {
