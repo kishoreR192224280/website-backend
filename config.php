@@ -3,6 +3,12 @@
 date_default_timezone_set('UTC');
 
 // =========================
+// SESSION CONFIG (Cross-Origin Auth)
+// =========================
+ini_set('session.cookie_samesite', 'None');
+ini_set('session.cookie_secure', '1');
+
+// =========================
 // CORS – allow production and dev frontends
 // =========================
 $envOrigins = getenv('ALLOWED_ORIGINS');

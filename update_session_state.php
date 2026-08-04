@@ -1,6 +1,6 @@
 <?php
-session_start();
 require_once 'config.php';
+session_start();
 require_once 'session_helpers.php';
 require_once 'notify_socket.php';
 header('Content-Type: application/json');

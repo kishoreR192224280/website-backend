@@ -1,6 +1,6 @@
-﻿<?php
-session_start();
+<?php
 require_once 'config.php';
+session_start();
 header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
