@@ -3,11 +3,12 @@
 date_default_timezone_set('UTC');
 
 // =========================
-// CORS – allow old production frontend
+// CORS – allow production and dev frontends
 // =========================
 $allowedOrigins = [
-    'https://conference-socket.onrender.com',   // production frontend
-    'https://europe-conference.vercel.app',         // local dev
+    'https://europe-conference.vercel.app',     // production frontend
+    'https://conference-socket.onrender.com',   // socket server
+    'http://localhost:5173',                    // local dev
 ];
 
 if (isset($_SERVER['HTTP_ORIGIN']) && in_array($_SERVER['HTTP_ORIGIN'], $allowedOrigins)) {
