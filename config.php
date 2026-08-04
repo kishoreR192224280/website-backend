@@ -19,12 +19,23 @@ if ($envOrigins) {
     $allowedOrigins = [
         'https://europe-conference.vercel.app',     // production frontend
         'https://conference-socket.onrender.com',   // socket server
-        'http://localhost:5173',                    // local dev
+        'http://localhost:5173',                    // local dev default
+        'http://localhost:8011',                    // local dev (current frontend)
     ];
 }
 
-if (isset($_SERVER['HTTP_ORIGIN']) && in_array($_SERVER['HTTP_ORIGIN'], $allowedOrigins)) {
-    header("Access-Control-Allow-Origin: " . $_SERVER['HTTP_ORIGIN']);
+if (isset($_SERVER['HTTP_ORIGIN'])) {
+    $origin = $_SERVER['HTTP_ORIGIN'];
+    $isAllowed = in_array($origin, $allowedOrigins);
+
+    // Also allow any Vercel preview deployments for this project
+    if (!$isAllowed && preg_match('#^https://europe-conference-[a-z0-9]+-[a-z0-9]+\.vercel\.app$#', $origin)) {
+        $isAllowed = true;
+    }
+
+    if ($isAllowed) {
+        header("Access-Control-Allow-Origin: " . $origin);
+    }
 }
 
 header("Access-Control-Allow-Credentials: true");

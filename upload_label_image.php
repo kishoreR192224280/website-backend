@@ -1,6 +1,6 @@
 <?php
 require_once 'config.php';
-session_start();
+require_once 'auth_helper.php';
 header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -9,11 +9,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-if (!isset($_SESSION['admin_id'])) {
-    http_response_code(401);
-    echo json_encode(['success' => false, 'error' => 'Unauthorized']);
-    exit;
-}
+require_admin_auth();
 
 if (!isset($_FILES['image'])) {
     http_response_code(400);

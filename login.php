@@ -1,6 +1,7 @@
 <?php
 require_once 'config.php';
-session_start();
+require_once 'auth_helper.php';
+
 header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -27,16 +28,19 @@ $stmt->execute([$username]);
 $user = $stmt->fetch();
 
 if ($user && hash_equals((string) $user['password'], $password)) {
-    $_SESSION['admin_id'] = $user['id'];
-    $_SESSION['admin_username'] = $user['username'];
-    $_SESSION['admin_name'] = $user['name'] ?? $user['username'];
+    $adminId   = (int) $user['id'];
+    $adminName = $user['name'] ?? $user['username'];
+
+    $token = generate_auth_token($adminId, (string) $user['username'], (string) $adminName);
+
     echo json_encode([
         'success' => true,
         'message' => 'Login successful',
-        'user' => [
-            'id' => $user['id'],
+        'token'   => $token,
+        'user'    => [
+            'id'       => $adminId,
             'username' => $user['username'],
-            'name' => $user['name'] ?? $user['username'],
+            'name'     => $adminName,
         ],
     ]);
     exit;

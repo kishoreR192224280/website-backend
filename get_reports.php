@@ -1,6 +1,6 @@
 <?php
 require_once 'config.php';
-session_start();
+require_once 'auth_helper.php';
 require_once 'session_helpers.php';
 header('Content-Type: application/json');
 
@@ -10,13 +10,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     exit;
 }
 
-if (!isset($_SESSION['admin_id'])) {
-    http_response_code(401);
-    echo json_encode(['success' => false, 'error' => 'Unauthorized']);
-    exit;
-}
-
-$adminId = (int) $_SESSION['admin_id'];
+$authPayload = require_admin_auth();
+$adminId = (int) $authPayload['admin_id'];
 
 try {
     $overviewStmt = $pdo->prepare(
@@ -24,7 +19,7 @@ try {
             COUNT(DISTINCT qs.id) AS total_sessions,
             COUNT(DISTINCT sp.student_id) AS total_students,
             COUNT(pa.id) AS total_answers,
-            COALESCE(SUM(CASE WHEN pa.is_correct = 1 THEN 1 ELSE 0 END), 0) AS correct_answers
+            COALESCE(SUM(CASE WHEN pa.is_correct = TRUE THEN 1 ELSE 0 END), 0) AS correct_answers
          FROM quiz_sessions qs
          LEFT JOIN session_participants sp ON sp.session_id = qs.id
          LEFT JOIN participant_answers pa ON pa.session_id = qs.id
@@ -45,7 +40,7 @@ try {
             sq.question_text,
             qs.title AS session_title,
             COUNT(pa.id) AS attempts,
-            COALESCE(SUM(CASE WHEN pa.is_correct = 1 THEN 1 ELSE 0 END), 0) AS correct_answers
+            COALESCE(SUM(CASE WHEN pa.is_correct = TRUE THEN 1 ELSE 0 END), 0) AS correct_answers
          FROM session_questions sq
          INNER JOIN quiz_sessions qs ON qs.id = sq.session_id
          LEFT JOIN participant_answers pa ON pa.question_id = sq.id
@@ -65,12 +60,12 @@ try {
             qs.status,
             qs.participant_count,
             qs.created_at,
-            COALESCE(session_accuracy.accuracy_pct, 0) AS accuracy_pct
+            COALESCE(CAST(session_accuracy.accuracy_pct AS FLOAT), 0) AS accuracy_pct
          FROM quiz_sessions qs
          LEFT JOIN (
             SELECT
                 pa.session_id,
-                ROUND(100 * SUM(CASE WHEN pa.is_correct = 1 THEN 1 ELSE 0 END) / NULLIF(COUNT(pa.id), 0), 1) AS accuracy_pct
+                ROUND(CAST(100.0 * SUM(CASE WHEN pa.is_correct = TRUE THEN 1 ELSE 0 END) AS NUMERIC) / NULLIF(COUNT(pa.id), 0), 1) AS accuracy_pct
             FROM participant_answers pa
             GROUP BY pa.session_id
          ) AS session_accuracy ON session_accuracy.session_id = qs.id
@@ -129,5 +124,5 @@ try {
     ]);
 } catch (Throwable $e) {
     http_response_code(500);
-    echo json_encode(['success' => false, 'error' => 'Failed to load reports']);
+    echo json_encode(['success' => false, 'error' => 'Failed to load reports', 'debug_error' => $e->getMessage()]);
 }

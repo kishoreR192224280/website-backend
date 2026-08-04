@@ -1,6 +1,6 @@
 <?php
 require_once 'config.php';
-session_start();
+require_once 'auth_helper.php';
 require_once 'session_helpers.php';
 header('Content-Type: application/json');
 
@@ -10,11 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     exit;
 }
 
-if (!isset($_SESSION['admin_id'])) {
-    http_response_code(401);
-    echo json_encode(['success' => false, 'error' => 'Unauthorized']);
-    exit;
-}
+$authPayload = require_admin_auth();
 
 $sessionId = (int) ($_GET['id'] ?? 0);
 if ($sessionId <= 0) {
@@ -30,7 +26,7 @@ if (!$sessionRow) {
     exit;
 }
 
-if ((int) $sessionRow['admin_id'] !== (int) $_SESSION['admin_id']) {
+if ((int) $sessionRow['admin_id'] !== (int) $authPayload['admin_id']) {
     http_response_code(403);
     echo json_encode(['success' => false, 'error' => 'Forbidden']);
     exit;

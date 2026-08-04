@@ -1,6 +1,6 @@
 <?php
 require_once 'config.php';
-session_start();
+require_once 'auth_helper.php';
 require_once 'session_helpers.php';
 require_once 'notify_socket.php';
 header('Content-Type: application/json');
@@ -11,13 +11,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-if (!isset($_SESSION['admin_id'])) {
-    http_response_code(401);
-    echo json_encode(['success' => false, 'error' => 'Unauthorized']);
-    exit;
-}
-$adminId = (int) $_SESSION['admin_id'];
-session_write_close();
+$authPayload = require_admin_auth();
+$adminId = (int) $authPayload['admin_id'];
 
 $data = json_decode(file_get_contents('php://input'), true);
 if (!is_array($data)) {

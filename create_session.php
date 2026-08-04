@@ -1,6 +1,6 @@
 <?php
 require_once 'config.php';
-session_start();
+require_once 'auth_helper.php';
 header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -9,11 +9,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-if (!isset($_SESSION['admin_id'])) {
-    http_response_code(401);
-    echo json_encode(['success' => false, 'error' => 'Unauthorized']);
-    exit;
-}
+$authPayload = require_admin_auth();
+$authAdminId = (int) $authPayload['admin_id'];
 
 $data = json_decode(file_get_contents('php://input'), true);
 
@@ -279,7 +276,7 @@ try {
         RETURNING id'
     );
     $insertSession->execute([
-        (int) $_SESSION['admin_id'],
+        $authAdminId,
         $publicCode,
         $title,
         $description !== '' ? $description : null,
