@@ -89,7 +89,21 @@ function verify_auth_token(string $token): ?array
  */
 function get_bearer_token(): ?string
 {
-    $header = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+    $header = '';
+    if (isset($_SERVER['HTTP_AUTHORIZATION'])) {
+        $header = trim($_SERVER['HTTP_AUTHORIZATION']);
+    } elseif (isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) {
+        $header = trim($_SERVER['REDIRECT_HTTP_AUTHORIZATION']);
+    } elseif (function_exists('apache_request_headers')) {
+        $requestHeaders = apache_request_headers();
+        foreach ($requestHeaders as $key => $value) {
+            if (strtolower($key) === 'authorization') {
+                $header = trim($value);
+                break;
+            }
+        }
+    }
+
     if (preg_match('/^Bearer\s+(.+)$/i', $header, $m)) {
         return $m[1];
     }
