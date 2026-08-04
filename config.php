@@ -5,11 +5,17 @@ date_default_timezone_set('UTC');
 // =========================
 // CORS – allow production and dev frontends
 // =========================
-$allowedOrigins = [
-    'https://europe-conference.vercel.app',     // production frontend
-    'https://conference-socket.onrender.com',   // socket server
-    'http://localhost:5173',                    // local dev
-];
+$envOrigins = getenv('ALLOWED_ORIGINS');
+if ($envOrigins) {
+    // e.g. "https://europe-conference.vercel.app,http://localhost:5173"
+    $allowedOrigins = array_map('trim', explode(',', $envOrigins));
+} else {
+    $allowedOrigins = [
+        'https://europe-conference.vercel.app',     // production frontend
+        'https://conference-socket.onrender.com',   // socket server
+        'http://localhost:5173',                    // local dev
+    ];
+}
 
 if (isset($_SERVER['HTTP_ORIGIN']) && in_array($_SERVER['HTTP_ORIGIN'], $allowedOrigins)) {
     header("Access-Control-Allow-Origin: " . $_SERVER['HTTP_ORIGIN']);
