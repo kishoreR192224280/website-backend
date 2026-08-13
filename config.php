@@ -66,40 +66,55 @@ if ($isHttps) {
 // =========================
 // CORS – allow production and dev frontends
 // =========================
+$defaultOrigins = [
+    'https://qonnect-for-conference.vercel.app', // current production frontend
+    'https://europe-conference.vercel.app',      // previous production frontend
+    'https://europe-conference.onrender.com',    // socket server
+    'http://localhost:5173',                     // local Vite
+    'http://localhost:8011',                     // local alt port
+];
+
 $envOrigins = getenv('ALLOWED_ORIGINS');
 if ($envOrigins) {
-    // e.g. "https://europe-conference.vercel.app,http://localhost:5173"
-    $allowedOrigins = array_map('trim', explode(',', $envOrigins));
+    $allowedOrigins = array_values(array_unique(array_filter(array_map(
+        'trim',
+        explode(',', $envOrigins)
+    ))));
+    // Always keep known production frontends even if Render env is stale.
+    $allowedOrigins = array_values(array_unique(array_merge($allowedOrigins, $defaultOrigins)));
 } else {
-    $allowedOrigins = [
-        'https://europe-conference.vercel.app',     // production frontend
-        'https://europe-conference.onrender.com',   // socket server
-        'http://localhost:5173',                    // local dev default
-        'http://localhost:8011',                    // local dev (current frontend)
-    ];
+    $allowedOrigins = $defaultOrigins;
 }
 
 if (isset($_SERVER['HTTP_ORIGIN'])) {
     $origin = $_SERVER['HTTP_ORIGIN'];
-    $isAllowed = in_array($origin, $allowedOrigins);
+    $isAllowed = in_array($origin, $allowedOrigins, true);
 
-    // Also allow any Vercel preview deployments for this project
-    if (!$isAllowed && preg_match('#^https://europe-conference-[a-z0-9]+-[a-z0-9]+\.vercel\.app$#', $origin)) {
+    // Allow Vercel preview URLs for both project name styles
+    if (
+        !$isAllowed &&
+        (
+            preg_match('#^https://qonnect-for-conference(?:-[a-z0-9-]+)?\.vercel\.app$#', $origin) ||
+            preg_match('#^https://europe-conference(?:-[a-z0-9-]+)?\.vercel\.app$#', $origin)
+        )
+    ) {
         $isAllowed = true;
     }
 
     if ($isAllowed) {
-        header("Access-Control-Allow-Origin: " . $origin);
+        header('Access-Control-Allow-Origin: ' . $origin);
+        header('Vary: Origin');
     }
 }
 
-header("Access-Control-Allow-Credentials: true");
-header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Authorization");
+header('Access-Control-Allow-Credentials: true');
+header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, Authorization');
+header('Access-Control-Max-Age: 86400');
 
 // IMPORTANT: handle preflight first
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
+    http_response_code(204);
     exit();
 }
 
