@@ -1,0 +1,15 @@
+.env
+.env.*
+!.env.example
+
+# Runtime / temporary files
+*.log
+logs/
+tmp/
+temp/
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

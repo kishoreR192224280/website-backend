@@ -410,5 +410,9 @@ try {
     }
 
     http_response_code(500);
-    echo json_encode(['success' => false, 'error' => 'Failed to create session']);
+    echo json_encode([
+        'success' => false,
+        'error' => 'Failed to create session',
+        'debug_error' => $e->getMessage(),
+    ]);
 }

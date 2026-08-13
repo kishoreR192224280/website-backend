@@ -32,8 +32,17 @@ if ((int) $sessionRow['admin_id'] !== (int) $authPayload['admin_id']) {
     exit;
 }
 
-$questions = fetch_session_questions($pdo, $sessionId);
-$session = hydrate_admin_session($pdo, $sessionRow, $questions);
+try {
+    $questions = fetch_session_questions($pdo, $sessionId);
+    $session = hydrate_admin_session($pdo, $sessionRow, $questions);
+} catch (Throwable $e) {
+    http_response_code(500);
+    echo json_encode([
+        'success' => false,
+        'error' => 'Failed to load session',
+    ]);
+    exit;
+}
 
 echo json_encode([
     'success' => true,

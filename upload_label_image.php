@@ -79,12 +79,42 @@ if (!move_uploaded_file($file['tmp_name'], $destination)) {
     exit;
 }
 
-$relativePath = '/WEBSITE-backend/uploads/label-images/' . $uniqueName;
+/**
+ * Prefer PUBLIC_BASE_URL from env (.env / hosting).
+ * Otherwise build from the current request host so local Apache works.
+ */
+function resolve_public_base_url(): string
+{
+    $configured = getenv('PUBLIC_BASE_URL');
+    if (is_string($configured) && trim($configured) !== '') {
+        return rtrim(trim($configured), '/');
+    }
+
+    $https = (
+        (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+        || (isset($_SERVER['SERVER_PORT']) && (int) $_SERVER['SERVER_PORT'] === 443)
+        || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https')
+    );
+    $scheme = $https ? 'https' : 'http';
+    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+
+    return $scheme . '://' . $host;
+}
+
+$relativePrefix = getenv('PUBLIC_UPLOAD_PREFIX');
+if (!is_string($relativePrefix) || trim($relativePrefix) === '') {
+    // Local XAMPP serves this project under /WEBSITE-backend.
+    // Production (Render Docker) serves from the web root.
+    $relativePrefix = '/WEBSITE-backend/uploads';
+}
+$relativePrefix = '/' . trim(str_replace('\\', '/', $relativePrefix), '/');
+$relativePath = $relativePrefix . '/label-images/' . $uniqueName;
+$publicUrl = resolve_public_base_url() . $relativePath;
 
 http_response_code(201);
 echo json_encode([
     'success' => true,
     'message' => 'Image uploaded successfully',
-    'url' => 'https://conference-socket.onrender.com' . $relativePath,
+    'url' => $publicUrl,
     'path' => $relativePath,
 ]);

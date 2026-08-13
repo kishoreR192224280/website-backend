@@ -884,7 +884,7 @@ function fetch_admin_live_feed(PDO $pdo, int $sessionId, ?int $currentQuestionId
          INNER JOIN students s ON s.id = sp.student_id
          LEFT JOIN participant_answers pa
             ON pa.participant_id = sp.id
-           AND (? IS NOT NULL AND pa.question_id = ?)
+           AND pa.question_id = CAST(? AS INTEGER)
          LEFT JOIN question_options qo
             ON qo.id = pa.selected_option_id
          WHERE sp.session_id = ?
@@ -893,7 +893,7 @@ function fetch_admin_live_feed(PDO $pdo, int $sessionId, ?int $currentQuestionId
             sp.id DESC
          LIMIT ' . max(1, (int) $limit)
     );
-    $stmt->execute([$currentQuestionId, $currentQuestionId, $sessionId]);
+    $stmt->execute([$currentQuestionId, $sessionId]);
     $rows = $stmt->fetchAll();
 
     $feed = [];

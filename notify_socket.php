@@ -6,7 +6,7 @@
 //   INTERNAL_SECRET    – shared secret that the socket server checks on /internal/* routes
 
 if (!defined('SOCKET_SERVER_URL')) {
-    define('SOCKET_SERVER_URL', getenv('SOCKET_SERVER_URL') ?: 'https://conference-socket.onrender.com');
+    define('SOCKET_SERVER_URL', getenv('SOCKET_SERVER_URL') ?: 'https://europe-conference.onrender.com');
 }
 if (!defined('INTERNAL_SECRET')) {
     define('INTERNAL_SECRET', getenv('INTERNAL_SECRET') ?: '');

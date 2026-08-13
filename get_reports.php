@@ -123,6 +123,31 @@ try {
         'reports' => $reports,
     ]);
 } catch (Throwable $e) {
+    // If the database is missing participant_answers table (42P01),
+    // return a safe 200 response so the frontend doesn't hard-fail.
+    $msg = $e->getMessage();
+    $isMissingParticipantAnswers =
+        ($e->getCode() === '42P01' || preg_match('/relation\s+"participant_answers"\s+does\s+not\s+exist/i', (string) $msg));
+
+    if ($isMissingParticipantAnswers) {
+        http_response_code(200);
+        echo json_encode([
+            'success' => true,
+            'reports' => [
+                'overview' => [
+                    'totalSessions' => 0,
+                    'totalStudents' => 0,
+                    'totalAnswers' => 0,
+                    'correctAnswers' => 0,
+                    'overallAccuracy' => 0,
+                ],
+                'questionAccuracy' => [],
+                'sessions' => [],
+            ],
+        ]);
+        exit;
+    }
+
     http_response_code(500);
-    echo json_encode(['success' => false, 'error' => 'Failed to load reports', 'debug_error' => $e->getMessage()]);
+    echo json_encode(['success' => false, 'error' => 'Failed to load reports', 'debug_error' => $msg]);
 }

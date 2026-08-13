@@ -3,10 +3,65 @@
 date_default_timezone_set('UTC');
 
 // =========================
-// SESSION CONFIG (Cross-Origin Auth)
+// Load local .env (Apache PHP does not read it automatically)
+// Existing process/Apache env vars win, so production stays unchanged.
 // =========================
-ini_set('session.cookie_samesite', 'None');
-ini_set('session.cookie_secure', '1');
+$envFile = __DIR__ . DIRECTORY_SEPARATOR . '.env';
+if (is_readable($envFile)) {
+    $envLines = file($envFile, FILE_IGNORE_NEW_LINES);
+    if ($envLines !== false) {
+        foreach ($envLines as $envLine) {
+            $envLine = trim($envLine);
+            if ($envLine === '' || str_starts_with($envLine, '#') || !str_contains($envLine, '=')) {
+                continue;
+            }
+
+            [$envKey, $envValue] = explode('=', $envLine, 2);
+            $envKey = trim($envKey);
+            $envValue = trim($envValue);
+            if ($envKey === '') {
+                continue;
+            }
+
+            $existing = getenv($envKey);
+            if ($existing !== false && $existing !== '') {
+                continue;
+            }
+
+            if (
+                (strlen($envValue) >= 2) &&
+                (
+                    (str_starts_with($envValue, '"') && str_ends_with($envValue, '"')) ||
+                    (str_starts_with($envValue, "'") && str_ends_with($envValue, "'"))
+                )
+            ) {
+                $envValue = substr($envValue, 1, -1);
+            }
+
+            putenv("{$envKey}={$envValue}");
+            $_ENV[$envKey] = $envValue;
+            $_SERVER[$envKey] = $envValue;
+        }
+    }
+}
+
+// =========================
+// SESSION CONFIG (Cross-Origin Auth)
+// Secure + SameSite=None is required for HTTPS cross-origin cookies.
+// Local HTTP (localhost:5173 → Apache :80) cannot use Secure cookies.
+// =========================
+$isHttps = (
+    (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+    || (isset($_SERVER['SERVER_PORT']) && (int) $_SERVER['SERVER_PORT'] === 443)
+    || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https')
+);
+if ($isHttps) {
+    ini_set('session.cookie_samesite', 'None');
+    ini_set('session.cookie_secure', '1');
+} else {
+    ini_set('session.cookie_samesite', 'Lax');
+    ini_set('session.cookie_secure', '0');
+}
 
 // =========================
 // CORS – allow production and dev frontends
@@ -18,7 +73,7 @@ if ($envOrigins) {
 } else {
     $allowedOrigins = [
         'https://europe-conference.vercel.app',     // production frontend
-        'https://conference-socket.onrender.com',   // socket server
+        'https://europe-conference.onrender.com',   // socket server
         'http://localhost:5173',                    // local dev default
         'http://localhost:8011',                    // local dev (current frontend)
     ];
@@ -53,17 +108,18 @@ header("Content-Type: application/json");
 // =========================
 // DATABASE CONFIG
 // =========================
-$host = getenv('DB_HOST') ?: 'dpg-d9o5d3u417fc73eiuod0-a.oregon-postgres.render.com';
+$host = getenv('DB_HOST') ?: 'localhost';
 $port = getenv('DB_PORT') ?: '5432';
-$db = getenv('DB_NAME') ?: 'websitedb_uo8p';
+$db = getenv('DB_NAME') ?: 'website-db';
 $user = getenv('DB_USER') ?: 'website_user';
-$pass = getenv('DB_PASS') ?: 'XcNr3mG9DdAu7dvULa7zUoJEZcG5adyA';
+$pass = getenv('DB_PASS') ?: 'Ambi**tion21';
+$sslmode = getenv('DB_SSLMODE') ?: (in_array($host, ['localhost', '127.0.0.1'], true) ? 'disable' : 'require');
 
 // =========================
 // DSN (PostgreSQL)
 // =========================
-// Note: sslmode=require is necessary for external Render DB connections
-$dsn = "pgsql:host=$host;port=$port;dbname=$db;sslmode=require";
+// sslmode=require is needed for Render; local Postgres typically needs disable.
+$dsn = "pgsql:host=$host;port=$port;dbname=$db;sslmode=$sslmode";
 
 // =========================
 // PDO OPTIONS
